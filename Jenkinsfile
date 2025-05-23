@@ -17,17 +17,23 @@ pipeline {
             }
         }
 
+        stage('Verify Dockerfile') {
+            steps {
+                sh 'ls -l Dockerfile'
+            }
+        }
+
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE_NAME .'
+                sh "docker build -t $IMAGE_NAME ."
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
                 script {
-                    withDockerRegistry([ credentialsId: 'dockerhub-creds', url: '' ]) {
-                        sh 'docker push $IMAGE_NAME'
+                    withDockerRegistry([ credentialsId: 'docker-cred', url: '' ]) {
+                        sh "docker push $IMAGE_NAME"
                     }
                 }
             }
