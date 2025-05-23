@@ -1,19 +1,14 @@
-pipeline {
+         pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'ayu199sh/fullstack-php-app'
-        DOCKERHUB_CREDENTIALS = credentials('docker-cred')
-    }
-
-    triggers {
-        pollSCM('H/5 * * * *')
+        DOCKER_IMAGE = 'ayu199sh/fullstack-php-app'
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'develop', url: 'https://github.com/Ayush-Sharma-VJW/dockerfile-php'
+                checkout scm
             }
         }
 
@@ -25,16 +20,18 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t $IMAGE_NAME ."
+                sh 'docker build -t $DOCKER_IMAGE .'
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                script {
-                    withDockerRegistry([ credentialsId: 'docker-cred', url: '' ]) {
-                        sh "docker push $IMAGE_NAME"
-                    }
+                withCredentials([usernamePassword(credentialsId: 'docker-cred', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh '''
+                        echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+                        docker push $DOCKER_IMAGE
+                        docker logout
+                    '''
                 }
             }
         }
